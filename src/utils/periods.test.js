@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  countWorkdays,
   currentPeriodRange,
   eachDayKey,
+  elapsedRange,
   isWithinRange,
   lastNDaysRange,
   toDateKey,
@@ -91,6 +93,49 @@ describe('eachDayKey', () => {
 
   it('returns nothing for a backwards range', () => {
     expect(eachDayKey('2026-08-20', '2026-08-10')).toEqual([])
+  })
+})
+
+describe('countWorkdays', () => {
+  it('counts five in a Monday-to-Sunday week', () => {
+    expect(countWorkdays('2026-08-17', '2026-08-23')).toBe(5)
+  })
+
+  it('counts none in a weekend', () => {
+    expect(countWorkdays('2026-08-22', '2026-08-23')).toBe(0)
+  })
+
+  it('counts a single weekday', () => {
+    expect(countWorkdays('2026-08-19', '2026-08-19')).toBe(1)
+  })
+
+  it('counts a whole month', () => {
+    expect(countWorkdays('2026-09-01', '2026-09-30')).toBe(22)
+  })
+
+  it('returns nothing for a backwards range', () => {
+    expect(countWorkdays('2026-08-20', '2026-08-10')).toBe(0)
+  })
+})
+
+describe('elapsedRange', () => {
+  it('caps a range that runs past today', () => {
+    expect(elapsedRange({ from: '2026-08-17', to: '2026-08-23' }, REFERENCE)).toEqual({
+      from: '2026-08-17',
+      to: '2026-08-20',
+    })
+  })
+
+  it('leaves a range in the past alone', () => {
+    expect(elapsedRange({ from: '2026-07-01', to: '2026-07-31' }, REFERENCE)).toEqual({
+      from: '2026-07-01',
+      to: '2026-07-31',
+    })
+  })
+
+  it('leaves nothing of a range that has not started', () => {
+    const range = elapsedRange({ from: '2026-09-01', to: '2026-09-30' }, REFERENCE)
+    expect(eachDayKey(range.from, range.to)).toEqual([])
   })
 })
 

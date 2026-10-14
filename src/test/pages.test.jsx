@@ -124,6 +124,8 @@ describe('pages render with real data', () => {
     // 1h 20min teaching (64%) + 45min studying (36%) this month.
     expect(screen.getByText('64%')).toBeInTheDocument()
     expect(screen.getByText('36%')).toBeInTheDocument()
+    expect(screen.getByText('Average per workday')).toBeInTheDocument()
+    expect(screen.getByText('Average per day')).toBeInTheDocument()
   })
 
   it('categories page lists categories with their logged totals', () => {

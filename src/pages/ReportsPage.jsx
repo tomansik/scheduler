@@ -25,8 +25,10 @@ import {
 } from '../store/selectors'
 import { formatDuration, toHours } from '../utils/duration'
 import {
+  countWorkdays,
   currentPeriodRange,
   eachDayKey,
+  elapsedRange,
   formatDateKey,
   lastNDaysRange,
   toDateKey,
@@ -127,7 +129,19 @@ export default function ReportsPage() {
     [categories, categoryTotals],
   )
 
-  const averagePerDay = dayCount > 0 ? Math.round(total / dayCount) : 0
+  // Averages divide by days that have happened, or a mid-month "This month"
+  // would count the rest of the month as days off.
+  const { elapsedDays, elapsedWorkdays } = useMemo(() => {
+    const elapsed = elapsedRange(range)
+    return {
+      elapsedDays: eachDayKey(elapsed.from, elapsed.to).length,
+      elapsedWorkdays: countWorkdays(elapsed.from, elapsed.to),
+    }
+  }, [range])
+
+  // Weekend time still counts towards the total; only the divisor skips weekends.
+  const averagePerWorkday = elapsedWorkdays > 0 ? Math.round(total / elapsedWorkdays) : null
+  const averagePerDay = elapsedDays > 0 ? Math.round(total / elapsedDays) : null
 
   if (status === 'loading' || status === 'idle') {
     return <Spinner label="Loading reports" />
@@ -185,14 +199,28 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-400">Total</p>
             <p className="text-xl font-semibold text-slate-900">{formatDuration(total)}</p>
           </div>
           <div>
+            <p className="text-xs uppercase tracking-wide text-slate-400">Average per workday</p>
+            <p className="text-xl font-semibold text-slate-900">
+              {averagePerWorkday === null ? '—' : formatDuration(averagePerWorkday)}
+            </p>
+            <p className="text-xs text-slate-400">
+              over {elapsedWorkdays} {elapsedWorkdays === 1 ? 'workday' : 'workdays'} (Mon–Fri)
+            </p>
+          </div>
+          <div>
             <p className="text-xs uppercase tracking-wide text-slate-400">Average per day</p>
-            <p className="text-xl font-semibold text-slate-900">{formatDuration(averagePerDay)}</p>
+            <p className="text-xl font-semibold text-slate-900">
+              {averagePerDay === null ? '—' : formatDuration(averagePerDay)}
+            </p>
+            <p className="text-xs text-slate-400">
+              over {elapsedDays} {elapsedDays === 1 ? 'day' : 'days'}
+            </p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-400">Days covered</p>

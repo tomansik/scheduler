@@ -4,6 +4,7 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  isWeekend,
   parseISO,
   startOfMonth,
   startOfWeek,
@@ -77,6 +78,20 @@ export function eachDayKey(from, to) {
   const end = fromDateKey(to)
   if (end < start) return []
   return eachDayOfInterval({ start, end }).map(toDateKey)
+}
+
+/** Monday-to-Friday days from `from` to `to`, inclusive. */
+export function countWorkdays(from, to) {
+  return eachDayKey(from, to).filter((key) => !isWeekend(fromDateKey(key))).length
+}
+
+/**
+ * The part of a range that has already happened: `to` capped at today. A range
+ * that starts after today comes back backwards, which `eachDayKey` treats as empty.
+ */
+export function elapsedRange({ from, to }, reference = new Date()) {
+  const today = todayKey(reference)
+  return { from, to: to > today ? today : to }
 }
 
 /** True when the date key falls inside an inclusive range. Keys sort lexically. */
